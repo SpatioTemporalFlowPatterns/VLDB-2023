@@ -169,166 +169,7 @@ def get_neighbors(region, other):
 	neighbors.difference_update(other)
 	return neighbors
 	
-
-# extends improved5 with the neighbor implementation of improved7
 def AVFCIN():
-	triples = [{},{},{},{}] # records counted ODT triples
-	patterns = [{},{},{},{}] # records counted ODT triples which are patterns (they satisfy minratio)
-	dests = {} # records dests with non-zero atomic score for each src
-	sources = {} # records sources with non-zero atomic score for each dest
-
-	for i in atomic:
-		for j in atomic[i]:
-			for k in atomic[i][j]:
-				if atomic[i][j][k]>=supatomicnumber:
-					patterns[3][(tuple([i]),tuple([j]),tuple([k]))]=1 # set support count of atomic triple to 1
-					if i in dests: dests[i].add(j)
-					else: dests[i]=set([j])
-					if j in sources: sources[j].add(i)
-					else: sources[j]=set([i])
-							
-	triples[3] = patterns[3]		
-	#print('number of atomic patterns:',len(patterns[3]))
-		
-	size = 4
-	while patterns[size-1]:
-		patterns.append({})
-		triples.append({})
-
-		# try all minimal generalizations
-		for p in patterns[size-1]:
-			#print(p)
-			#print(patterns[size-1][p])
-			# compute number of atomic triples in current pattern p
-			#psize = len(p[0])*len(p[1])*len(p[2])
-
-			startingsupport = patterns[size-1][p]
-
-			# try to expand source
-			if len(p[0])<originbound:
-				neigh = get_neighbors(p[0],p[1])
-				for n in neigh:
-					expsrc = tuple(sorted(list((p[0]+(n,)))))
-					if (expsrc,p[1],p[2]) in triples[size]: continue # already examined this pattern before
-					cursupcount = startingsupport
-
-                    #check if OD pair of pprime has at support at least one
-					if n not in dests or not dests[n]&set(p[1]): # no chance to find any atomic pattern in pprime
-						if n in atomic :
-							if cursupcount>=(len(p[0])+1)*len(p[1])*len(p[2])*minratio:
-								patterns[size][(expsrc,p[1],p[2])]=cursupcount
-							triples[size][(expsrc,p[1],p[2])]=cursupcount
-					else:
-						if n in atomic :
-							pprime = ((n,),p[1],p[2])
-							if pprime in triples[1+len(p[1])+len(p[2])]: # pprime already counted
-								cursupcount+= triples[1+len(p[1])+len(p[2])][pprime]
-                                #numsavings[size] +=1
-							else:
-                                #numfullcomp[size]+=1
-                                # examine all atomic patterns that consist of src and all combinations
-                                # of dest and time in patterns[size-1][p]
-								for j in p[1]: # for each dest in p
-									if j in atomic[n]:
-										for k in p[2]: # for each timeslot in p
-											if k in atomic[n][j]:
-												if atomic[n][j][k]>=supatomicnumber:
-													cursupcount+=1
-                                #if patterns[size-1][p]<cursupcount: # support increased
-                                #	odpairs.add(((n,),p[1]))
-                                #	odpairs.add((expsrc,p[1]))
-							if cursupcount>=(len(p[0])+1)*len(p[1])*len(p[2])*minratio:
-								patterns[size][(expsrc,p[1],p[2])]=cursupcount
-							triples[size][(expsrc,p[1],p[2])]=cursupcount
-
-			# try to expand dest
-			if len(p[1])<destbound:
-				neigh = get_neighbors(p[1],p[0])
-				for n in neigh:
-    #			for n in next_neighbor(p[1],p[0]):
-                    # if n in p[0] or n in p[1]: continue
-					expdest = tuple(sorted(list((p[1]+(n,)))))
-					if (p[0],expdest,p[2]) in triples[size]: continue # already examined this pattern before
-					cursupcount = startingsupport
-        
-                    #check if OD pair of pprime has at support at least one
-					if n not in sources or not sources[n]&set(p[0]): # no chance to find any atomic pattern in pprime
-                    #if (p[0],(n,)) not in odpairs: # no chance to find any atomic pattern in pprime
-                        #numsavings[size] +=1
-                        #print('diff triple',pprime,'guaranteed to have 0 count')
-						if cursupcount>=len(p[0])*(1+len(p[1]))*len(p[2])*minratio:
-							patterns[size][(p[0],expdest,p[2])]=cursupcount
-						triples[size][(p[0],expdest,p[2])]=cursupcount
-					else:
-						pprime = (p[0],(n,),p[2])
-						if pprime in triples[len(p[0])+1+len(p[2])]:
-							cursupcount+= triples[len(p[0])+1+len(p[2])][pprime]
-                            #numsavings[size] +=1
-						else:
-                            #numfullcomp[size]+=1
-                            # examine all atomic patterns that consist of src and all combinations
-                            # of dest and time in patterns[size-1][p]
-							for i in p[0]: # for each src in p
-								if i in atomic:
-									for k in p[2]: # for each timeslot in p
-										if n in atomic[i] and k in atomic[i][n]:
-											if atomic[i][n][k]>=supatomicnumber:
-												cursupcount+=1
-                            #if patterns[size-1][p]<cursupcount: # support increased
-                            #	odpairs.add((p[0],(n,)))
-                            #	odpairs.add((p[0],expdest))
-						if cursupcount>=len(p[0])*(1+len(p[1]))*len(p[2])*minratio:
-							patterns[size][(p[0],expdest,p[2])]=cursupcount
-						triples[size][(p[0],expdest,p[2])]=cursupcount
-
-			# try to expand timeslot (forward expansion)
-			nextts = p[2][-1]+1
-#			if nextts <= 47:
-			if nextts <= 47 and nextts-p[2][0]<=timebound:
-				#numgen[size]+=1
-				cursupcount = startingsupport
-				pprime = (p[0],p[1],(nextts,))
-				if pprime in triples[len(p[0])+len(p[1])+1]:
-					cursupcount+= triples[len(p[0])+len(p[1])+1][pprime]
-					#numsavings[size] +=1
-				else:
-					#numfullcomp[size]+=1
-					for i in p[0]: # for each src in p
-						if i in atomic:
-							for j in p[1]: # for each dest in p
-								if j in atomic[i]:
-									if nextts in atomic[i][j] and atomic[i][j][nextts]>=supatomicnumber:
-										cursupcount+=1
-				if cursupcount>=len(p[0])*len(p[1])*(1+len(p[2]))*minratio:
-					patterns[size][(p[0],p[1],p[2]+(nextts,))]=cursupcount
-				triples[size][(p[0],p[1],p[2]+(nextts,))]=cursupcount
-			prevts = p[2][0]-1 # try backward expansion
-			if prevts >= 0 and p[2][-1]-prevts<=timebound:
-				#numgen[size]+=1
-				expts = (prevts,)+p[2]
-				if (p[0],p[1],expts) in triples[size]: continue # already examined this pattern before
-				cursupcount = startingsupport
-				pprime = (p[0],p[1],(prevts,))
-				if pprime in triples[len(p[0])+len(p[1])+1]:
-					cursupcount+= triples[len(p[0])+len(p[1])+1][pprime]
-					#numsavings[size] +=1
-				else:
-					#numfullcomp[size]+=1
-					for i in p[0]: # for each src in p
-						if i in atomic:
-							for j in p[1]: # for each dest in p
-								if j in atomic[i]:
-									if prevts in atomic[i][j] and atomic[i][j][prevts]>=supatomicnumber:
-										cursupcount+=1
-				if cursupcount>=len(p[0])*len(p[1])*(1+len(p[2]))*minratio:
-					patterns[size][(p[0],p[1],expts)]=cursupcount
-				triples[size][(p[0],p[1],expts)]=cursupcount
-		#patterns.append([])
-		size += 1
-	return patterns
-
-# extends improved8 with prefix sum on timeslots
-def OPT():
 	atomicset = set()
 	triples = [{},{},{},{}] # records counted ODT triples
 	patterns = [{},{},{},{}] # records counted ODT triples which are patterns (they satisfy minratio)
@@ -533,6 +374,162 @@ def OPT():
 		size += 1
 	return patterns
 
+
+def OPT():
+	triples = [{},{},{},{}] # records counted ODT triples
+	patterns = [{},{},{},{}] # records counted ODT triples which are patterns (they satisfy minratio)
+	dests = {} # records dests with non-zero atomic score for each src
+	sources = {} # records sources with non-zero atomic score for each dest
+
+	for i in atomic:
+		for j in atomic[i]:
+			for k in atomic[i][j]:
+				if atomic[i][j][k]>=supatomicnumber:
+					patterns[3][(tuple([i]),tuple([j]),tuple([k]))]=1 # set support count of atomic triple to 1
+					if i in dests: dests[i].add(j)
+					else: dests[i]=set([j])
+					if j in sources: sources[j].add(i)
+					else: sources[j]=set([i])
+							
+	triples[3] = patterns[3]		
+	#print('number of atomic patterns:',len(patterns[3]))
+		
+	size = 4
+	while patterns[size-1]:
+		patterns.append({})
+		triples.append({})
+
+		# try all minimal generalizations
+		for p in patterns[size-1]:
+			#print(p)
+			#print(patterns[size-1][p])
+			# compute number of atomic triples in current pattern p
+			#psize = len(p[0])*len(p[1])*len(p[2])
+
+			startingsupport = patterns[size-1][p]
+
+			# try to expand source
+			if len(p[0])<originbound:
+				neigh = get_neighbors(p[0],p[1])
+				for n in neigh:
+					expsrc = tuple(sorted(list((p[0]+(n,)))))
+					if (expsrc,p[1],p[2]) in triples[size]: continue # already examined this pattern before
+					cursupcount = startingsupport
+
+                    #check if OD pair of pprime has at support at least one
+					if n not in dests or not dests[n]&set(p[1]): # no chance to find any atomic pattern in pprime
+						if n in atomic :
+							if cursupcount>=(len(p[0])+1)*len(p[1])*len(p[2])*minratio:
+								patterns[size][(expsrc,p[1],p[2])]=cursupcount
+							triples[size][(expsrc,p[1],p[2])]=cursupcount
+					else:
+						if n in atomic :
+							pprime = ((n,),p[1],p[2])
+							if pprime in triples[1+len(p[1])+len(p[2])]: # pprime already counted
+								cursupcount+= triples[1+len(p[1])+len(p[2])][pprime]
+                                #numsavings[size] +=1
+							else:
+                                #numfullcomp[size]+=1
+                                # examine all atomic patterns that consist of src and all combinations
+                                # of dest and time in patterns[size-1][p]
+								for j in p[1]: # for each dest in p
+									if j in atomic[n]:
+										for k in p[2]: # for each timeslot in p
+											if k in atomic[n][j]:
+												if atomic[n][j][k]>=supatomicnumber:
+													cursupcount+=1
+                                #if patterns[size-1][p]<cursupcount: # support increased
+                                #	odpairs.add(((n,),p[1]))
+                                #	odpairs.add((expsrc,p[1]))
+							if cursupcount>=(len(p[0])+1)*len(p[1])*len(p[2])*minratio:
+								patterns[size][(expsrc,p[1],p[2])]=cursupcount
+							triples[size][(expsrc,p[1],p[2])]=cursupcount
+
+			# try to expand dest
+			if len(p[1])<destbound:
+				neigh = get_neighbors(p[1],p[0])
+				for n in neigh:
+    #			for n in next_neighbor(p[1],p[0]):
+                    # if n in p[0] or n in p[1]: continue
+					expdest = tuple(sorted(list((p[1]+(n,)))))
+					if (p[0],expdest,p[2]) in triples[size]: continue # already examined this pattern before
+					cursupcount = startingsupport
+        
+                    #check if OD pair of pprime has at support at least one
+					if n not in sources or not sources[n]&set(p[0]): # no chance to find any atomic pattern in pprime
+                    #if (p[0],(n,)) not in odpairs: # no chance to find any atomic pattern in pprime
+                        #numsavings[size] +=1
+                        #print('diff triple',pprime,'guaranteed to have 0 count')
+						if cursupcount>=len(p[0])*(1+len(p[1]))*len(p[2])*minratio:
+							patterns[size][(p[0],expdest,p[2])]=cursupcount
+						triples[size][(p[0],expdest,p[2])]=cursupcount
+					else:
+						pprime = (p[0],(n,),p[2])
+						if pprime in triples[len(p[0])+1+len(p[2])]:
+							cursupcount+= triples[len(p[0])+1+len(p[2])][pprime]
+                            #numsavings[size] +=1
+						else:
+                            #numfullcomp[size]+=1
+                            # examine all atomic patterns that consist of src and all combinations
+                            # of dest and time in patterns[size-1][p]
+							for i in p[0]: # for each src in p
+								if i in atomic:
+									for k in p[2]: # for each timeslot in p
+										if n in atomic[i] and k in atomic[i][n]:
+											if atomic[i][n][k]>=supatomicnumber:
+												cursupcount+=1
+                            #if patterns[size-1][p]<cursupcount: # support increased
+                            #	odpairs.add((p[0],(n,)))
+                            #	odpairs.add((p[0],expdest))
+						if cursupcount>=len(p[0])*(1+len(p[1]))*len(p[2])*minratio:
+							patterns[size][(p[0],expdest,p[2])]=cursupcount
+						triples[size][(p[0],expdest,p[2])]=cursupcount
+
+			# try to expand timeslot (forward expansion)
+			nextts = p[2][-1]+1
+#			if nextts <= 47:
+			if nextts <= 47 and nextts-p[2][0]<=timebound:
+				#numgen[size]+=1
+				cursupcount = startingsupport
+				pprime = (p[0],p[1],(nextts,))
+				if pprime in triples[len(p[0])+len(p[1])+1]:
+					cursupcount+= triples[len(p[0])+len(p[1])+1][pprime]
+					#numsavings[size] +=1
+				else:
+					#numfullcomp[size]+=1
+					for i in p[0]: # for each src in p
+						if i in atomic:
+							for j in p[1]: # for each dest in p
+								if j in atomic[i]:
+									if nextts in atomic[i][j] and atomic[i][j][nextts]>=supatomicnumber:
+										cursupcount+=1
+				if cursupcount>=len(p[0])*len(p[1])*(1+len(p[2]))*minratio:
+					patterns[size][(p[0],p[1],p[2]+(nextts,))]=cursupcount
+				triples[size][(p[0],p[1],p[2]+(nextts,))]=cursupcount
+			prevts = p[2][0]-1 # try backward expansion
+			if prevts >= 0 and p[2][-1]-prevts<=timebound:
+				#numgen[size]+=1
+				expts = (prevts,)+p[2]
+				if (p[0],p[1],expts) in triples[size]: continue # already examined this pattern before
+				cursupcount = startingsupport
+				pprime = (p[0],p[1],(prevts,))
+				if pprime in triples[len(p[0])+len(p[1])+1]:
+					cursupcount+= triples[len(p[0])+len(p[1])+1][pprime]
+					#numsavings[size] +=1
+				else:
+					#numfullcomp[size]+=1
+					for i in p[0]: # for each src in p
+						if i in atomic:
+							for j in p[1]: # for each dest in p
+								if j in atomic[i]:
+									if prevts in atomic[i][j] and atomic[i][j][prevts]>=supatomicnumber:
+										cursupcount+=1
+				if cursupcount>=len(p[0])*len(p[1])*(1+len(p[2]))*minratio:
+					patterns[size][(p[0],p[1],expts)]=cursupcount
+				triples[size][(p[0],p[1],expts)]=cursupcount
+		#patterns.append([])
+		size += 1
+	return patterns
 
 print('\nbaseline is running:\n')
 st = time.time()
