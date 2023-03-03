@@ -29,7 +29,7 @@ The neighborhood graph has the following format:<br/>
       default values (for taxi network): origin=6, destination=6, time=6 <br/>
       ```python3 findpatterns-bounded.py <neighborhood_graph> <trips_table> <support for atomic patterns> <support for extended patterns> <timebound> <src> <dest>``` <br/>
         
-       Example (for different origins - we use the default values): python3 findpatterns-bounded.py adj_taxi.txt flows.txt 0.1 0.3 6 2 6
+       Example (for different origins - we use the default values): python3 findpatterns-bounded.py adj_taxi.txt flows.txt 0.001 0.5 6 2 6
        
 
  
