@@ -1,2 +1,6 @@
 # VLDB-2023
-Code for paper: Spatio-Temporal Flow Patterns
+Spatio-temporal flow patterns
+
+Chrysanthi Kosyfaki, PhD Candidate, University of Ioannina, Greece
+
+
