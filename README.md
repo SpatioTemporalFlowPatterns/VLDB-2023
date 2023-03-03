@@ -4,7 +4,7 @@ Spatio-temporal flow patterns
 Chrysanthi Kosyfaki, PhD Candidate, University of Ioannina, Greece
 
 Instructions for compiling and running the code
-1. To use the code, you will need two files: - a trips table and a neighborhood graph: <br/>
+1. To use the code, we will need two files: - a trips table and a neighborhood graph: <br/>
 The trips table has the following format: <br/>
   src dest timeslot flow <br/>
 The neighborhood graph has the following format:<br/>
