@@ -32,8 +32,9 @@ The neighborhood graph has the following format:<br/>
        Example (for different origins - we use the default values): python3 findpatterns-bounded.py adj_taxi.txt flows.txt 0.001 0.5 6 2 6
        
 - For the use-cse experiment, we run the following command: <br/>    
-    ```python3 findpatterns-bounded.py <neighborhood_graph> <trips_table> <support for atomic patterns> <support for extended patterns> <timebound> <query-file>```
+    ```python3 findpatterns-restricted.py <neighborhood_graph> <trips_table> <support for atomic patterns> <support for extended patterns> <timebound> <query-file>```
        
+       Example: python3 findpatterns-restricted.py adj_taxi.txt flows.txt 0.1 0.3 10000 manhattan-query.txt
 
  
 
