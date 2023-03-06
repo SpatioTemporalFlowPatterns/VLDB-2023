@@ -33,3 +33,6 @@ The neighborhood graph has the following format:
 
 - For the use-cse experiment, we run the following command: 
        python3 findpatterns- restricted.py <neighborhood_graph> <trips_table> <support for atomic patterns> <support for extended patterns> <timebound> <query-file>
+       
+        Example: python3 findpatterns-restricted.py adj_taxi.txt flows.txt 0.1 0.3 10000 manhattan-query.txt
+
